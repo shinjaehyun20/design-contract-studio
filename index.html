@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Design Contract Studio — brand rules to editable slides</title>
+  <link rel="stylesheet" href="styles.css?v=15">
+  <meta name="description" content="Apply brand rules to a real slide, inspect every change, and export an editable PowerPoint. Files stay in your browser.">
+  <link rel="stylesheet" href="public.css">
+  <script src="file-tools.js"></script>
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <aside id="chatPanel" class="chat-panel" aria-label="AI editing conversation">
+      <header class="chat-header">
+        <div class="brand-mark" aria-hidden="true"><span></span><span></span></div>
+        <div class="brand-copy">
+          <strong>Canvas Studio</strong>
+          <small>Local editing workspace</small>
+        </div>
+        <button id="collapseChat" class="icon-button" title="대화 패널 접기" aria-label="대화 패널 접기">‹</button>
+      </header>
+
+      <div class="project-strip">
+        <button id="projectMenu" class="project-menu" aria-expanded="false">
+          <span class="status-dot"></span>
+          <span><b id="projectLabel">경영 전략 보고서</b><small id="saveStatus">로컬에 저장됨</small></span>
+          <span aria-hidden="true">⌄</span>
+        </button>
+      </div>
+
+      <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
+
+      <section class="command-hints" aria-label="빠른 명령">
+        <button data-command="하단 표 제거">하단 표 제거</button>
+        <button data-command="설명 영역 24%">설명 24%</button>
+        <button data-command="폰트 KoPub">KoPub 적용</button>
+      </section>
+
+      <form id="promptForm" class="prompt-box">
+        <textarea id="promptInput" rows="3" aria-label="편집 요청" placeholder="무엇을 바꿀까요? 예: 선택 객체를 가운데 정렬"></textarea>
+        <div class="prompt-actions">
+          <button id="importAsset" type="button" class="icon-button" title="이미지 추가" aria-label="이미지 추가">＋</button>
+          <span class="engine-chip">Local rule engine</span>
+          <button class="send-button" type="submit">적용</button>
+        </div>
+      </form>
+    </aside>
+
+    <main class="editor-shell">      <header class="public-header">
+        <a class="product-brand" href="./" aria-label="Design Contract Studio home"><span class="product-icon">d<span>c</span></span><span>Design Contract<br><b>Studio</b></span></a>
+        <div class="document-title"><span>WORKSPACE</span><strong id="publicFileName">Northstar — a calmer workday</strong></div>
+        <div class="header-actions"><span id="fileToolsStatus" class="file-tools-status" role="status">Loading file tools…</span><button id="publicOpen" class="secondary-action">Open PPTX</button><button id="publicExport" class="primary-action">Download PPTX <span aria-hidden="true">↓</span></button></div>
+      </header>
+
+      <header class="topbar">
+        <div class="toolbar-group left-tools">
+          <button id="showChat" class="icon-button is-hidden" title="대화 패널 열기" aria-label="대화 패널 열기">›</button>
+          <button id="toggleRail" class="icon-button" title="슬라이드 목록 토글" aria-label="슬라이드 목록 토글">☷</button>
+          <button id="reloadProject" class="icon-button" title="저장본 다시 불러오기" aria-label="저장본 다시 불러오기">↻</button>
+          <button id="fileSwitcher" class="file-switcher">
+            <span><b id="fileName">경영 전략 보고서</b><small id="pageCount">3 pages</small></span>
+            <span aria-hidden="true">⌄</span>
+          </button>
+        </div>
+
+        <div class="toolbar-group lane-tools" role="group" aria-label="워크스페이스 모드">
+          <button id="openPresentationStudio" class="lane-button highlight" title="새 발표자료 작성">새 발표자료</button>
+          <button id="canonicalEditBtn" class="lane-button is-active" title="기존 PPTX 편집 (Canonical Edit)">기존 PPTX 편집</button>
+        </div>
+
+        <div class="toolbar-group mode-tools" role="group" aria-label="편집 모드">
+          <button data-mode="comment" class="mode-button">Comment</button>
+          <button data-mode="tweaks" class="mode-button">Tweaks</button>
+          <button data-mode="edit" class="mode-button is-active">Edit</button>
+        </div>
+
+        <div class="toolbar-group view-tools" role="group" aria-label="슬라이드 보기">
+          <button data-view-mode="normal" class="is-active" title="기본 보기">▣</button>
+          <button data-view-mode="sorter" title="여러 슬라이드 보기">▦</button>
+          <button data-view-mode="master" title="슬라이드 마스터 보기">M</button>
+        </div>
+
+        <div class="toolbar-group right-tools">
+          <button id="undoButton" class="icon-button" title="실행 취소 Ctrl+Z" aria-label="실행 취소">↶</button>
+          <button id="redoButton" class="icon-button" title="다시 실행 Ctrl+Y 또는 Ctrl+Shift+Z" aria-label="다시 실행">↷</button>
+          <label class="zoom-control" title="확대/축소">
+            <input id="zoomRange" type="range" min="35" max="125" value="72">
+            <output id="zoomValue">72%</output>
+          </label>
+          <button id="importMenuButton" class="toolbar-button">Import</button>
+          <button id="presentButton" class="toolbar-button">Present</button>
+          <button id="shareButton" class="toolbar-button">Share</button>
+          <button id="exportMenuButton" class="toolbar-button emphasis">Export</button>
+        </div>
+      </header>
+
+      <aside id="showcasePanel" class="showcase-panel" aria-labelledby="showcaseTitle">
+        <div class="panel-title"><span class="eyebrow">BRAND &amp; STYLE</span><h1 id="showcaseTitle">Your rules. <br>Your presentation.</h1><p>Bring a brand system to your slides, one deliberate change at a time.</p></div>
+        <section class="brand-card"><div class="brand-card-top"><span class="file-glyph">md</span><div><strong id="showcaseContractMeta">Northstar · DESIGN.md</strong><small>Design contract</small></div><button id="publicContract" title="Choose a DESIGN.md file" aria-label="Choose a DESIGN.md file">↥</button></div><div class="color-row"><span style="--swatch:#1D5D46"></span><span style="--swatch:#D5DBC1"></span><span style="--swatch:#F5F3EA"></span><span style="--swatch:#E7AA62"></span><small>Northstar palette</small></div><div class="font-preview"><b>Aa</b><span>Georgia · Arial<small>Heading and body</small></span></div><button id="showcaseLoad" class="secondary-action">Load sample rules</button></section>
+        <div class="apply-area"><button id="showcaseApply" class="primary-action" disabled>Apply to slide</button><small id="showcaseApplyMeta">Load rules or choose your own DESIGN.md.</small></div>
+        <section class="changes-section"><header><h2 id="changeHeading">Changes to apply</h2><span id="showcaseDiffCount">0</span><button id="showcaseCopy" title="Copy the change list">Copy</button></header><div id="showcaseDiffs" class="showcase-diffs"></div></section>
+        <section class="selection-card"><h2>Selection</h2><p id="selectionHint">Click an object on the slide to edit it.</p><div id="selectionFields" hidden><label>Text<textarea id="publicText" rows="2"></textarea></label><div class="selection-controls"><label>Color<input id="publicColor" type="color" value="#1d5d46"></label><label>Text size<input id="publicSize" type="number" min="6" max="160" step="1"></label><button id="publicUpdate" class="secondary-action">Update</button></div></div></section>
+        <div class="panel-bottom"><button id="showcaseRoundTrip" class="secondary-action">Export &amp; reopen</button><button id="showcaseReset" title="Restore the sample">Reset sample</button><p class="showcase-status" id="showcaseStatus" role="status" aria-live="polite"></p><details class="file-note"><summary>About your files</summary><p>Editing and conversion run in your browser. Save a PPTX or project JSON before closing this tab. File tools download on first use. Text, basic shapes, and images remain editable; complex charts, animations and master relationships may change.</p><button id="publicSaveJson">Save project JSON</button><a href="DESIGN.md" download>Download sample rules</a></details></div>
+        <button id="showcaseReview" hidden></button>
+      </aside>
+      <section id="editModeBar" class="edit-mode-bar" aria-label="직접 편집 도구">
+        <div class="edit-session-controls">
+          <strong>Edit</strong>
+          <button id="discardEdits" class="quiet-button">Discard</button>
+          <button id="saveEdits" class="save-edit-button">Save</button>
+        </div>
+        <div class="surface-mode-tools" role="group" aria-label="편집 호환 모드">
+          <button id="pptxMode" data-editor-mode="pptx" class="is-active" title="PPTX document editing: section, slide master, Ctrl+M">PPTX document</button>
+          <button id="figmaMode" data-editor-mode="figma" title="Spatial canvas interaction: frame, auto layout, component shortcuts. Native .fig file support is unavailable.">Canvas shortcuts</button>
+        </div>
+        <nav class="edit-depth-tabs" aria-label="편집 깊이">
+          <button data-edit-panel="simple" class="is-active">Simple</button>
+          <button data-edit-panel="pro">Pro</button>
+          <button data-edit-panel="code">Code</button>
+          <button data-edit-panel="tweaks">Tweaks</button>
+        </nav>
+        <div class="direct-tools" role="toolbar" aria-label="캔버스 도구">
+          <button data-tool="select" class="is-active" title="Select (V)">↖<span>Select</span></button>
+          <button data-tool="interact" title="Pan canvas (I · Space+drag)">☝<span>Pan</span></button>
+          <i></i>
+          <button data-tool="text" title="Text (T)">T<span>Text</span></button>
+          <button data-tool="frame" title="Frame (F)">⌗<span>Frame</span></button>
+          <button data-tool="rectangle" title="Rectangle (R)">□<span>Rect</span></button>
+          <button data-tool="oval" title="Oval (O)">○<span>Oval</span></button>
+          <button data-tool="arrow" title="Arrow (A)">↗<span>Arrow</span></button>
+          <button data-tool="line" title="Line (L)">╱<span>Line</span></button>
+          <button data-tool="draw" title="Draw (P)">✎<span>Draw</span></button>
+          <i></i>
+          <button id="createComponent" title="Create component from selection (Ctrl+Alt+K)">◇<span>Component</span></button>
+          <button id="strikeButton" title="취소선">S̶<span>Strike</span></button>
+          <button id="symbolButton" title="기호 삽입">Ω<span>Symbol</span></button>
+          <button id="shapeMenuButton" title="도형 삽입 및 변경">⬡<span>Shapes</span></button>
+          <button id="cropButton" title="이미지 자르기">⌗<span>Crop</span></button>
+          <button id="eyedropperButton" title="스포이트 색상 선택">♢<span>Pick</span></button>
+          <button id="rulerButton" title="눈금자 표시/숨기기">⌑<span>Ruler</span></button>
+        </div>
+      </section>
+
+      <div class="editor-body">
+        <aside id="slideRail" class="slide-rail" aria-label="슬라이드 목록">
+          <div class="rail-heading">
+            <span>SLIDES</span>
+            <span class="rail-actions">
+              <button id="addSection" class="icon-button" title="섹션 추가" aria-label="섹션 추가">§＋</button>
+              <button id="addSlide" class="icon-button" title="슬라이드 추가" aria-label="슬라이드 추가">＋</button>
+            </span>
+          </div>
+          <div id="slideList" class="slide-list"></div>
+        </aside>
+
+        <section class="canvas-column">
+          <div class="canvas-toolbar">
+            <div class="canvas-breadcrumb" aria-live="polite">
+              <b id="selectionSummary">Slide</b>
+              <span id="selectionPath">Canvas / current slide</span>
+            </div>
+            <div class="selection-tools">
+              <button id="addImage" class="compact-tool">▧ Image</button>
+              <span id="modeStatus">Edit mode</span>
+              <span id="interactionContract" class="interaction-contract">PPTX document: slide · section · master · Ctrl+M</span>
+              <span id="structureStatus" class="structure-pass">Structure OK</span>
+            </div>
+          </div>
+
+          <div id="canvasWorkarea" class="canvas-workarea has-rulers">
+            <div class="ruler-corner" aria-hidden="true"></div>
+            <div id="horizontalRuler" class="ruler ruler-horizontal" aria-hidden="true"></div>
+            <div id="verticalRuler" class="ruler ruler-vertical" aria-hidden="true"></div>
+            <div id="canvasViewport" class="canvas-viewport" tabindex="0" aria-label="디자인 캔버스 · 선택은 Arrow로 1px, Shift+Arrow로 10px 이동 · 선택이 없으면 Arrow는 캔버스를 이동 · Space 드래그 또는 middle drag로 양축 이동">
+              <div id="stageScaler" class="stage-scaler">
+                <div id="slideStage" class="slide-stage" role="application" aria-label="현재 슬라이드와 바깥 작업 영역"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="notes-bar">
+            <label for="speakerNotes">Speaker notes</label>
+            <textarea id="speakerNotes" rows="1" placeholder="이 슬라이드에 대한 메모가 없습니다."></textarea>
+            <span id="slideCounter">1 / 3</span>
+          </div>
+        </section>
+
+        <aside id="inspector" class="inspector" aria-label="속성 및 레이어">
+          <nav class="inspector-tabs" role="tablist">
+            <button data-tab="properties" class="is-active" role="tab">Properties</button>
+            <button data-tab="layers" role="tab">Layers</button>
+            <button data-tab="components" role="tab">Assets</button>
+            <button data-tab="recipe" role="tab">Recipe</button>
+            <button data-tab="comments" role="tab">Comments</button>
+          </nav>
+          <div id="inspectorContent" class="inspector-content"></div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div id="projectPopover" class="popover is-hidden" role="dialog" aria-label="프로젝트 메뉴">
+    <label>프로젝트명<input id="projectNameInput" type="text"></label>
+    <button id="newPresentationProject">새 발표자료 작성</button>
+    <button id="newProject">새 프로젝트 (빈 캔버스)</button>
+    <button id="importJson">JSON 가져오기</button>
+    <button id="importPptx">PPTX 가져오기</button>
+    <button id="importDesignMd">DESIGN.md 가져오기</button>
+    <button id="exportJson">JSON 내보내기</button>
+  </div>
+
+  <div id="importPopover" class="popover import-popover is-hidden" role="dialog" aria-label="가져오기 메뉴">
+    <strong>파일 가져오기</strong>
+    <small>PPTX·JSON은 프로젝트로 열고, DESIGN.md는 token/rule/component 계약으로 연결합니다.</small>
+    <button id="importPptxDirect">PPTX → 편집 프로젝트</button>
+    <button id="convertPptxToFigma">PPTX → spatial Canvas handoff</button>
+    <button id="importDesignMdDirect">DESIGN.md → automation contract</button>
+    <button id="importComponentManifest">Component manifest → local catalog</button>
+    <button id="importJsonDirect">Canvas Studio JSON</button>
+    <button id="importImageDirect">이미지 → 현재 슬라이드</button>
+  </div>
+
+  <div id="exportPopover" class="popover export-popover is-hidden" role="dialog" aria-label="내보내기 메뉴">
+    <strong>파일 내보내기</strong>
+    <button id="exportPptx">전체 프로젝트 PPTX</button>
+    <button id="preparePptxFromFigma">Canvas IR → editable PPTX 준비</button>
+    <button id="exportFigmaCanvas">Canvas handoff JSON</button>
+    <button id="exportAllHtml">전체 프로젝트 HTML</button>
+    <button id="exportHtml">현재 슬라이드 HTML</button>
+    <button id="exportJsonAlt">전체 프로젝트 JSON</button>
+  </div>
+
+  <div id="symbolPopover" class="popover palette-popover is-hidden" role="dialog" aria-label="기호 삽입">
+    <strong>기호</strong>
+    <div class="symbol-grid" role="listbox"></div>
+  </div>
+
+  <div id="shapePopover" class="popover palette-popover shape-popover is-hidden" role="dialog" aria-label="도형 삽입 및 변경">
+    <strong>도형</strong>
+    <small>선택한 도형이 있으면 변경하고, 없으면 새로 삽입합니다.</small>
+    <div class="shape-gallery"></div>
+  </div>
+
+  <div id="presentOverlay" class="present-overlay is-hidden" aria-hidden="true" inert>
+    <button id="closePresent" class="present-close" aria-label="프레젠테이션 닫기">×</button>
+    <div id="presentStage" class="present-stage"></div>
+    <div class="present-controls">
+      <button id="presentPrev">←</button>
+      <span id="presentCounter">1 / 3</span>
+      <button id="presentNext">→</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <input id="imageInput" type="file" accept="image/*" hidden>
+  <input id="jsonInput" type="file" accept="application/json,.json" hidden>
+  <input id="pptxInput" type="file" accept="application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx" hidden>
+  <input id="designInput" type="file" accept="text/markdown,text/plain,.md" hidden>
+  <input id="componentManifestInput" type="file" accept="application/json,.json" hidden>
+  <input id="commentAttachmentInput" type="file" accept="image/*,.pdf,.txt" hidden>
+  <script src="app.js?v=21"></script>
+  <script src="public.js"></script>
+</body>
+</html>

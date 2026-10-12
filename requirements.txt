@@ -1,0 +1,6 @@
+# Security-hardened XML parsing used by the PPTX/DESIGN.md server adapter.
+defusedxml==0.7.1
+# DESIGN.md frontmatter parser used by the same server adapter.
+PyYAML==6.0.3
+# Native PPTX import/export adapter loaded during server startup.
+python-pptx==1.0.2
