@@ -31,7 +31,29 @@ jobs:
         run: python -m unittest -v test_adapter
       - name: Browser tests
         run: |
-          python -m http.server 8765 --bind 127.0.0.1 > /tmp/dcs-server.log 2>&1 &
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+            export QA_URL="https://shinjaehyun20.github.io/design-contract-studio/"
+            python - <<'PY'
+          import hashlib, os, time, urllib.request
+          from pathlib import Path
+          expected = hashlib.sha256(Path('public.css').read_bytes()).hexdigest()
+          url = os.environ['QA_URL'] + 'public.css?v=' + os.environ['GITHUB_SHA']
+          for attempt in range(20):
+              try:
+                  with urllib.request.urlopen(url, timeout=15) as response:
+                      actual = hashlib.sha256(response.read()).hexdigest()
+                  if actual == expected:
+                      print('Published CSS matches the tested commit.')
+                      break
+              except Exception as error:
+                  print(type(error).__name__)
+              time.sleep(10)
+          else:
+              raise RuntimeError('Published CSS does not match this commit.')
+          PY
+          else
+            python -m http.server 8765 --bind 127.0.0.1 > /tmp/dcs-server.log 2>&1 &
+          fi
           python test_browser.py
       - name: Capture tested source
         if: always()
