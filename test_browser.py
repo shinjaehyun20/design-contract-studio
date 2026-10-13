@@ -64,7 +64,7 @@ def exercise_editing(browser):
         download.value.save_as(pptx_path)
         native = Presentation(str(pptx_path))
         assert len(native.slides) == 1
-        assert edited in [shape.text for shape in native.slides[0].shapes if shape.has_text_frame]
+        assert edited in [shape.text.replace("\v", "\n") for shape in native.slides[0].shapes if shape.has_text_frame]
         checks.append("Downloaded PPTX contains the edited, editable text")
         page.locator("#showcaseRoundTrip").click()
         page.wait_for_function("['pass','failed'].includes(window.CanvasStudio.getShowcaseEvidence().phase)", timeout=120000)
@@ -116,7 +116,7 @@ def exercise_editing(browser):
         exported = Presentation(str(multi_path))
         assert len(exported.slides) == 3
         for number, slide in enumerate(exported.slides, start=1):
-            assert f"Northstar {number}\n브랜드 규칙 {number}" in [shape.text for shape in slide.shapes if shape.has_text_frame]
+            assert f"Northstar {number}\n브랜드 규칙 {number}" in [shape.text.replace("\v", "\n") for shape in slide.shapes if shape.has_text_frame]
         checks.append("Three-slide PPTX export preserves every page and its Korean/English text")
         page.locator("#showcaseRoundTrip").click()
         page.wait_for_function("['pass','failed'].includes(window.CanvasStudio.getShowcaseEvidence().phase)", timeout=120000)
