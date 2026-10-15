@@ -32,7 +32,8 @@ class PresentationRoundTrip(unittest.TestCase):
             {'id':'outline','type':'shape','name':'Outline','kind':'rectangle','x':300,'y':340,'w':190,'h':45,'z':2,'style':{'fill':'transparent','borderColor':'#1D5D46','borderWidth':2}},
             {'id':'title','type':'text','name':'Heading','content':'한글도 편집합니다.\nA little space.','x':260,'y':80,'w':630,'h':150,'z':3,'style':{'fontFamily':'Georgia, serif','fontSize':48,'fontWeight':400,'color':'#303B38','lineHeight':1.12,'padding':0}}]
         project={'name':'Editable sample','slides':[{'title':'Brand story','width':960,'height':540,'background':'#F5F3EA','notes':'Editable presentation sample.','objects':objects}]}
-        data=project_to_pptx(project);native=Presentation(io.BytesIO(data));self.assertEqual(native.slides[0].shapes[0].auto_shape_type,MSO_AUTO_SHAPE_TYPE.OVAL)
+        data=project_to_pptx(project);native=Presentation(io.BytesIO(data));self.assertEqual(native.slides[0].shapes[0].auto_shape_type,MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE)
+        self.assertAlmostEqual(native.slides[0].shapes[0].adjustments[0],0.5)
         reopened=convert_pptx(data,'sample.pptx');self.assertEqual(reopened['name'],project['name']);slide=reopened['slides'][0]
         self.assertEqual(slide['title'],'Brand story');self.assertEqual(slide['background'],'#F5F3EA');self.assertIn('Editable presentation sample.',slide['notes'])
         self.assertEqual(len(slide['objects']),len(objects))

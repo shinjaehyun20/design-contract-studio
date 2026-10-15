@@ -483,6 +483,8 @@ def native_shape_kind(shape: Any) -> str:
         MSO_AUTO_SHAPE_TYPE.RECTANGULAR_CALLOUT: 'callout',
     }
     try:
+        if shape.auto_shape_type == MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE and abs(shape.adjustments[0] - 0.5) < 0.0001:
+            return 'oval'  # The canvas uses a pill for non-square radius-999 shapes.
         return mapping.get(shape.auto_shape_type, 'rectangle')
     except (AttributeError, ValueError):
         return 'rectangle'
@@ -708,12 +710,19 @@ def add_export_shape(slide: Any, item: dict[str, Any], sx: float, sy: float) -> 
         "callout": MSO_AUTO_SHAPE_TYPE.RECTANGULAR_CALLOUT,
     }
     kind = shape_types.get(item.get("kind"))
+    capsule = item.get('kind') == 'oval' and abs(float(item.get('w') or 0) - float(item.get('h') or 0)) > 0.01
+    if capsule:
+        # CSS radius:999 clamps to half the shorter side, producing a pill,
+        # not an ellipse. Keep that contour as an editable native shape.
+        kind = MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE
     if kind is None:
         kind = MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE if float(style.get("radius") or 0) >= 8 else MSO_AUTO_SHAPE_TYPE.RECTANGLE
     shape = slide.shapes.add_shape(kind, px(item.get("x"), sx), px(item.get("y"), sy), px(item.get("w"), sx), px(item.get("h"), sy))
     # Canvas shapes have no theme effects. An explicit empty list prevents
     # PowerPoint's default shape style from adding a shadow on native reopen.
     shape._element.spPr.append(OxmlElement('a:effectLst'))
+    if capsule:
+        shape.adjustments[0] = 0.5
     shape.name = str(item.get("name") or shape.name)
     shape.rotation = float(item.get("rotation") or 0)
     apply_export_fill(shape.fill, style.get("fill"))
