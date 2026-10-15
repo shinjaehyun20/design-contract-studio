@@ -22,6 +22,8 @@ from pptx.enum.text import PP_ALIGN
 
 from pptx.util import Inches, Pt
 
+from pptx.oxml.xmlchemy import OxmlElement
+
 MAX_XML_PART = 10 * 1024 * 1024
 
 P14_NS = "http://schemas.microsoft.com/office/powerpoint/2010/main"
@@ -383,7 +385,7 @@ def text_style(shape: Any, scale: float) -> dict[str, Any]:
         "fontStyle": "italic" if bool(getattr(font, "italic", False)) else "normal",
         "color": color,
         "textAlign": align,
-        "lineHeight": float(shape.text_frame.paragraphs[0].line_spacing) if isinstance(shape.text_frame.paragraphs[0].line_spacing, float) else 1.25,
+        "lineHeight": float(shape.text_frame.paragraphs[0].line_spacing) if isinstance(shape.text_frame.paragraphs[0].line_spacing, float) else 1.0,
         "background": fill_hex(shape),
         "borderColor": line_hex(shape),
         "borderWidth": line_width(shape, scale),
@@ -709,6 +711,9 @@ def add_export_shape(slide: Any, item: dict[str, Any], sx: float, sy: float) -> 
     if kind is None:
         kind = MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE if float(style.get("radius") or 0) >= 8 else MSO_AUTO_SHAPE_TYPE.RECTANGLE
     shape = slide.shapes.add_shape(kind, px(item.get("x"), sx), px(item.get("y"), sy), px(item.get("w"), sx), px(item.get("h"), sy))
+    # Canvas shapes have no theme effects. An explicit empty list prevents
+    # PowerPoint's default shape style from adding a shadow on native reopen.
+    shape._element.spPr.append(OxmlElement('a:effectLst'))
     shape.name = str(item.get("name") or shape.name)
     shape.rotation = float(item.get("rotation") or 0)
     apply_export_fill(shape.fill, style.get("fill"))
