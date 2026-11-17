@@ -1,7 +1,29 @@
 import base64, io, json, unittest, zipfile
+from pptx import Presentation
+from pptx.util import Inches
 from adapter import convert_pptx, project_to_pptx, parse_design_md, dispatch_json
 
 class PresentationRoundTrip(unittest.TestCase):
+    def test_export_does_not_inherit_theme_shape_effects(self):
+        project={'slides':[{'width':960,'height':540,'objects':[{'type':'shape','kind':'rectangle','x':10,'y':20,'w':100,'h':80,'style':{'fill':'#1D5D46'}}]}]}
+        native=Presentation(io.BytesIO(project_to_pptx(project)))
+        shape=native.slides[0].shapes[0]
+        # Without this direct override, the default effectRef resolves to a
+        # theme shadow in PowerPoint even though model/roundtrip checks pass.
+        self.assertEqual(len(shape._element.xpath('./p:spPr/a:effectLst')),1)
+        self.assertEqual(len(shape._element.xpath('./p:spPr/a:effectLst/*')),0)
+
+    def test_import_keeps_default_single_line_spacing(self):
+        source=Presentation()
+        slide=source.slides.add_slide(source.slide_layouts[6])
+        title=slide.shapes.add_textbox(Inches(1),Inches(1),Inches(8),Inches(2))
+        title.text='First line\nSecond line'
+        data=io.BytesIO();source.save(data)
+        project=convert_pptx(data.getvalue(),'single-spacing.pptx')
+        self.assertEqual(project['slides'][0]['objects'][0]['style']['lineHeight'],1.0)
+        exported=Presentation(io.BytesIO(project_to_pptx(project)))
+        self.assertEqual(exported.slides[0].shapes[0].text_frame.paragraphs[0].line_spacing,1.0)
+
     def test_native_shapes_unicode_text_and_spacing(self):
         from pptx import Presentation
         from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE
@@ -10,7 +32,8 @@ class PresentationRoundTrip(unittest.TestCase):
             {'id':'outline','type':'shape','name':'Outline','kind':'rectangle','x':300,'y':340,'w':190,'h':45,'z':2,'style':{'fill':'transparent','borderColor':'#1D5D46','borderWidth':2}},
             {'id':'title','type':'text','name':'Heading','content':'한글도 편집합니다.\nA little space.','x':260,'y':80,'w':630,'h':150,'z':3,'style':{'fontFamily':'Georgia, serif','fontSize':48,'fontWeight':400,'color':'#303B38','lineHeight':1.12,'padding':0}}]
         project={'name':'Editable sample','slides':[{'title':'Brand story','width':960,'height':540,'background':'#F5F3EA','notes':'Editable presentation sample.','objects':objects}]}
-        data=project_to_pptx(project);native=Presentation(io.BytesIO(data));self.assertEqual(native.slides[0].shapes[0].auto_shape_type,MSO_AUTO_SHAPE_TYPE.OVAL)
+        data=project_to_pptx(project);native=Presentation(io.BytesIO(data));self.assertEqual(native.slides[0].shapes[0].auto_shape_type,MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE)
+        self.assertAlmostEqual(native.slides[0].shapes[0].adjustments[0],0.5)
         reopened=convert_pptx(data,'sample.pptx');self.assertEqual(reopened['name'],project['name']);slide=reopened['slides'][0]
         self.assertEqual(slide['title'],'Brand story');self.assertEqual(slide['background'],'#F5F3EA');self.assertIn('Editable presentation sample.',slide['notes'])
         self.assertEqual(len(slide['objects']),len(objects))

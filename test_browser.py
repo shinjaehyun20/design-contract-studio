@@ -3,7 +3,7 @@ import json
 import os
 from pathlib import Path
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect, sync_playwright
 
 OUT = Path(os.environ.get("QA_OUTPUT", "/tmp/dcs-quality"))
 OUT.mkdir(parents=True, exist_ok=True)
@@ -37,11 +37,14 @@ def exercise_editing(browser):
         checks.append("Apply changes the three targeted sample objects")
 
         page.locator('.canvas-object[data-id="headline"]').click()
-        original = page.locator("#publicText").input_value()
+        headline = "window.CanvasStudio.getProject().slides[0].objects.find(o=>o.id==='headline').content"
+        original = page.evaluate(headline)
+        # Selection fields synchronize on a deferred pointerup callback.
+        # Read the model and wait for the visible editor before changing it.
+        expect(page.locator("#publicText")).to_have_value(original)
         edited = "A better workday.\nA clearer story."
         page.locator("#publicText").fill(edited)
         page.locator("#publicUpdate").click()
-        headline = "window.CanvasStudio.getProject().slides[0].objects.find(o=>o.id==='headline').content"
         assert page.evaluate(headline) == edited
         page.locator("#publicUndo").click()
         assert page.evaluate(headline) == original, "Undo did not restore the selected text"
